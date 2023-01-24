@@ -1,0 +1,121 @@
+#define CUSTOM_SETTINGS
+#define INCLUDE_DABBLEINPUTS_MODULE
+#define INCLUDE_TERMINAL_MODULE
+#define INCLUDE_NOTIFICATION_MODULE
+
+#include <Arduino.h>
+#include <DabbleESP32.h>
+//** Programa **//
+
+
+
+String Serialdata = "";
+bool dataflag = 0;
+//int mt_encender = 12;
+//int mt_apagar = 27;
+//int bt_encender = 26;
+//int bt_apagar = 25;
+int rojo=19;      //definimos el valor del pin para el led rojo
+int amarillo=18;  //definimos el valor del pin para el led amarillo
+int verde=5; 
+int sensor_nivel = 13;
+int nivel;
+
+int IN1 = 19;
+int IN2 = 18;
+int IN3 = 5; 
+int IN4 = 17;
+int enB = 16;
+
+int LED = 2;
+int pwm;
+
+//void TaskBlink1(void *pvParameters);
+
+void SensorNivel (){
+    nivel = analogRead(sensor_nivel);
+    
+    if(nivel>=1500){
+      digitalWrite(verde, HIGH);
+      digitalWrite(amarillo, LOW);
+      digitalWrite(rojo, LOW);
+      Notification.notifyPhone(String("Nivel Alto"));
+    }
+    else if(nivel>=1200 && nivel<1500){
+      digitalWrite(verde, LOW);
+      digitalWrite(amarillo, HIGH);
+      digitalWrite(rojo, LOW);
+      Notification.notifyPhone(String("Nivel Medio"));
+    }
+    else{
+      digitalWrite(verde, LOW);
+      digitalWrite(amarillo, LOW);
+      digitalWrite(rojo, HIGH);
+      Notification.notifyPhone(String("Nivel Bajo"));
+    }
+
+}
+
+
+void setup() {
+  Serial.begin(9600);     // make sure your Serial Monitor is also set at this baud rate.
+  Dabble.begin("MyEsp32");     //set bluetooth name of your device
+  Dabble.waitForAppConnection();   
+  Notification.clear();                        //clear previous notifictions
+  Notification.setTitle("Nivel del Agua"); 
+
+  pinMode(IN1,OUTPUT);
+  pinMode(IN2,OUTPUT);
+  pinMode(IN3,OUTPUT);
+  pinMode(IN4,OUTPUT);
+  pinMode(enB,OUTPUT);
+ 
+  
+
+}
+
+void loop() {
+    
+  Dabble.processInput();             //this function is used to refresh data obtained from smartphone.Hence calling this function is mandatory in order to get data properly from your mobile.
+    
+  pwm=map(Inputs.getPot2Value(),0,1024,0,255);
+  analogWrite(enB,pwm);
+ 
+ if(Inputs.getSlideSwitch1Value() == 2){
+      digitalWrite (IN1, HIGH);
+      digitalWrite (IN2, LOW);
+      
+      Serial.println("prendidoBomba"); 
+      SensorNivel();
+      //Serial.println(digitalRead(IN1));
+      delay(500);
+    }
+  
+  else if(Inputs.getSlideSwitch2Value()== 2){
+    digitalWrite (IN3, HIGH);
+    digitalWrite (IN4, LOW);
+    Serial.println("prendidoMotor"); 
+    delay(500);
+  }
+
+  else if(Inputs.getSlideSwitch2Value() == 0){
+      //digitalWrite (IN1, LOW);
+      digitalWrite (IN3, LOW);
+      Serial.println("apagadoMotor"); 
+      delay(500);
+  }
+
+  else if(Inputs.getSlideSwitch1Value() == 0){
+      digitalWrite (IN1, LOW);
+      //digitalWrite (IN3, LOW);
+      Serial.println("apagadoBomba"); 
+      delay(500);
+    }
+    Serial.println(digitalRead(IN1));
+    Serial.println(digitalRead(IN3));
+    Serial.println(Inputs.getTactileSwitch1Value());
+    Serial.println(nivel);
+    delay(500);
+
+}
+
